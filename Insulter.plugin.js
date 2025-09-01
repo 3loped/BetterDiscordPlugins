@@ -1,152 +1,60 @@
 /**
  * @name Insulter
- * @author Ahlawat
- * @authorId 1025214794766221384
- * @version 1.2.0
- * @invite SgKSKyh9gY
- * @description Adds a slash command to send an insult.
- * @website https://tharki-god.github.io/
- * @source https://github.com/Tharki-God/BetterDiscordPlugins
- * @updateUrl https://tharki-god.github.io/BetterDiscordPlugins/Insulter.plugin.js
+ * @author Ahlawat (patched by shyy)
+ * @version 1.3.0
+ * @description Adds a simple insult command. Works without BunnyLib. Use `/insult` or `!insult` in chat. Add `send` after to actually send (e.g. `/insult send`).
+ * @source https://github.com/Tharki-God/BetterDiscordPlugins (original)
  */
-/*@cc_on
-@if (@_jscript)
-var shell = WScript.CreateObject("WScript.Shell");
-var fs = new ActiveXObject("Scripting.FileSystemObject");
-var pathPlugins = shell.ExpandEnvironmentStrings("%APPDATA%\\BetterDiscord\\plugins");
-var pathSelf = WScript.ScriptFullName;
-shell.Popup("It looks like you've mistakenly tried to run me directly. \n(Don't do that!)", 0, "I'm a plugin for BetterDiscord", 0x30);
-if (fs.GetParentFolderName(pathSelf) === fs.GetAbsolutePathName(pathPlugins)) {
-shell.Popup("I'm in the correct folder already.", 0, "I'm already installed", 0x40);
-} else if (!fs.FolderExists(pathPlugins)) {
-shell.Popup("I can't find the BetterDiscord plugins folder.\nAre you sure it's even installed?", 0, "Can't install myself", 0x10);
-} else if (shell.Popup("Should I move myself to BetterDiscord's plugins folder for you?", 0, "Do you need some help?", 0x34) === 6) {
-fs.MoveFile(pathSelf, fs.BuildPath(pathPlugins, fs.GetFileName(pathSelf)));
-shell.Exec("explorer " + pathPlugins);
-shell.Popup("I'm installed!", 0, "Successfully installed", 0x40);
-}
-WScript.Quit();
-@else@*/
+
 module.exports = (() => {
   const config = {
     info: {
       name: "Insulter",
-      authors: [
-        {
-          name: "Ahlawat",
-          discord_id: "1025214794766221384",
-          github_username: "Tharki-God",
-        },
-      ],
-      version: "1.2.0",
-      description: "Adds a slash command to send an insult.",
+      authors: [{ name: "Ahlawat", discord_id: "1025214794766221384" }],
+      version: "1.3.0",
+      description: "Adds an insult command. Works without BunnyLib.",
       github: "https://github.com/Tharki-God/BetterDiscordPlugins",
-      github_raw:
-        "https://tharki-god.github.io/BetterDiscordPlugins/Insulter.plugin.js",
     },
-    changelog: [
-      {
-        title: "v0.0.1",
-        items: ["Idea in mind"],
-      },
-      {
-        title: "v0.0.5",
-        items: ["Base Model"],
-      },
-      {
-        title: "Initial Release v1.0.0",
-        items: [
-          "This is the initial release of the plugin :)",
-          "I am useless and should die ＼（〇_ｏ）／",
-        ],
-      },
-      {
-        title: "v1.1.1",
-        items: ["Corrected text."],
-      },
-    ],
     main: "Insulter.plugin.js",
   };
-   const RequiredLibs = [{
+
+  const RequiredLib = {
     window: "ZeresPluginLibrary",
     filename: "0PluginLibrary.plugin.js",
-    external: "https://rauenzi.github.io/BDPluginLibrary/release/0PluginLibrary.plugin.js",
-    downloadUrl: "https://rauenzi.github.io/BDPluginLibrary/release/0PluginLibrary.plugin.js"
-  },
-  {
-    window: "BunnyLib",
-    filename: "1BunnyLib.plugin.js",
-    external: "https://github.com/Tharki-God/BetterDiscordPlugins",
-    downloadUrl: "https://tharki-god.github.io/BetterDiscordPlugins/1BunnyLib.plugin.js"
-  },
-  ];
-  class handleMissingLibrarys {
+    downloadUrl: "https://rauenzi.github.io/BDPluginLibrary/release/0PluginLibrary.plugin.js",
+  };
+
+  class MissingLibrary {
     load() {
-      for (const Lib of RequiredLibs.filter(lib =>  !window.hasOwnProperty(lib.window)))
+      if (!window[RequiredLib.window])
         BdApi.showConfirmationModal(
           "Library Missing",
-          `The library plugin (${Lib.window}) needed for ${config.info.name} is missing. Please click Download Now to install it.`,
+          `The library plugin (${RequiredLib.window}) needed for ${config.info.name} is missing. Click Download Now to install it.`,
           {
             confirmText: "Download Now",
             cancelText: "Cancel",
-            onConfirm: () => this.downloadLib(Lib),
+            onConfirm: () => {
+              require("electron").shell.openExternal(RequiredLib.downloadUrl);
+            },
           }
         );
     }
-    async downloadLib(Lib) {
-      const fs = require("fs");
-      const path = require("path");
-      const { Plugins } = BdApi;
-      const LibFetch = await fetch(
-        Lib.downloadUrl
-      );
-      if (!LibFetch.ok) return this.errorDownloadLib(Lib);
-      const LibContent = await LibFetch.text();
-      try {
-        await fs.writeFile(
-          path.join(Plugins.folder, Lib.filename),
-          LibContent,
-          (err) => {
-            if (err) return this.errorDownloadLib(Lib);
-          }
-        );
-      } catch (err) {
-        return this.errorDownloadLib(Lib);
-      }
-    }
-    errorDownloadZLib(Lib) {
-      const { shell } = require("electron");
-      BdApi.showConfirmationModal(
-        "Error Downloading",
-        [
-          `${Lib.window} download failed. Manually install plugin library from the link below.`,
-        ],
-        {
-          confirmText: "Download",
-          cancelText: "Cancel",
-          onConfirm: () => {
-            shell.openExternal(
-              Lib.external
-            );
-          },
-        }
-      );
-    }
-    start() { }
-    stop() { }
+    start() {}
+    stop() {}
   }
-  return RequiredLibs.some(m => !window.hasOwnProperty(m.window))
-    ? handleMissingLibrarys
-    : (([Plugin, ZLibrary]) => {
-        const {
-          WebpackModules,
-          PluginUpdater,
-          Logger,
-          Patcher,
-          DiscordModules: { MessageActions },
-        } = ZLibrary;
-        const { LibraryUtils, ApplicationCommandAPI } = BunnyLib.build(config); 
-        return class insult extends Plugin {
+
+  return window[RequiredLib.window]
+    ? (([Plugin, ZLibrary]) => {
+        const { WebpackModules, Patcher, Logger, PluginUpdater } = ZLibrary;
+        const MessageActions = WebpackModules.getByProps("sendMessage", "editMessage");
+        const UserStore = WebpackModules.getByProps("getCurrentUser");
+
+        return class InsulterPlugin extends Plugin {
+          constructor() {
+            super();
+            this.patchId = "Insulter-patch-sendMessage";
+          }
+
           checkForUpdates() {
             try {
               PluginUpdater.checkForUpdate(
@@ -155,80 +63,113 @@ module.exports = (() => {
                 config.info.github_raw
               );
             } catch (err) {
-              Logger.err("Plugin Updater could not be reached.", err);
+              // ignore updater failures
+              Logger.err("Updater error", err);
             }
           }
+
           start() {
             this.checkForUpdates();
-            this.addCommand();
+            this.patchSendMessage();
           }
-          addCommand() {
-            ApplicationCommandAPI.register(config.info.name, {
-                name: "insult",
-                displayName: "insult",
-                displayDescription: "Send an insult.",
-                description: "Send an insult.",
-                type: 1,
-                target: 1,
-                execute: async ([send], { channel }) => {
-                  try {
-                    const insult = await this.getInsult();
-                    if (!insult)
-                      return MessageActions.sendBotMessage(
-                        channel.id,
-                        "Unable to get any insult for you, dumb cunt."
-                      );
-                    send.value
-                      ? MessageActions.sendMessage(
-                          channel.id,
-                          {
-                            content: insult,
-                            tts: false,
-                            bottom: true,
-                            invalidEmojis: [],
-                            validNonShortcutEmojis: [],
-                          },
-                          undefined,
-                          {}
-                        )
-                      : MessageActions.receiveMessage(
-                          channel.id,
-                          LibraryUtils.FakeMessage(channel.id, insult)
-                        );
-                  } catch (err) {
+
+          stop() {
+            Patcher.unpatchAll(this.patchId);
+          }
+
+          patchSendMessage() {
+            if (!MessageActions || !MessageActions.sendMessage) return;
+
+            Patcher.before(this.patchId, MessageActions, "sendMessage", (thisObject, args) => {
+              try {
+                // args: (channelId, message)
+                const channelId = args[0];
+                const message = args[1];
+                if (!message || !message.content) return;
+                const content = message.content.trim();
+
+                // Recognize both /insult and !insult (simple fallback when slash-commands aren't available)
+                const match = content.match(/^(?:\/|!)insult(?:\s+(.+))?/i);
+                if (!match) return; // not our command
+
+                // Prevent the original message from being sent
+                args[1] = Object.assign({}, message, { content: "", tts: false });
+
+                const arg = (match[1] || "").toLowerCase();
+                const shouldSend = arg.includes("send");
+
+                // fetch insult and either send as the user (if shouldSend) or fake-receive it
+                this.getInsult()
+                  .then((insult) => {
+                    if (!insult) {
+                      this._replyFailure(channelId);
+                      return;
+                    }
+
+                    if (shouldSend) {
+                      // send as the user (this will show up as their message)
+                      MessageActions.sendMessage(channelId, { content: insult });
+                    } else {
+                      // fake a received message from a bot-like author
+                      const fake = this._makeFakeMessage(channelId, insult);
+                      // use receiveMessage if available, otherwise sendMessage as a bot
+                      if (MessageActions.receiveMessage) {
+                        MessageActions.receiveMessage(channelId, fake);
+                      } else {
+                        MessageActions.sendMessage(channelId, { content: insult });
+                      }
+                    }
+                  })
+                  .catch((err) => {
                     Logger.err(err);
-                    MessageActions.receiveMessage(
-                      channel.id,
-                      LibraryUtils.FakeMessage(
-                        channel.id,
-                        "Unable to get any insult for you, dumb cunt."
-                      )
-                    );
-                  }
-                },
-                options: [
-                  {
-                    description: "Whether you want to send this or not.",
-                    displayDescription: "Whether you want to send this or not.",
-                    displayName: "Send",
-                    name: "Send",
-                    required: true,
-                    type: 5,
-                  },
-                ],
-              });
+                    this._replyFailure(channelId);
+                  });
+
+                // Block original send by returning early from before patch (we already cleared content)
+              } catch (err) {
+                Logger.err(err);
+              }
+            });
           }
+
+          _replyFailure(channelId) {
+            try {
+              MessageActions.sendMessage(channelId, { content: "Unable to get any insult for you, idiot." });
+            } catch (err) {
+              Logger.err("Failed to send failure message", err);
+            }
+          }
+
+          _makeFakeMessage(channelId, content) {
+            const user = UserStore.getCurrentUser();
+            // Minimal shape similar to a message object the app expects
+            return {
+              id: Date.now().toString(),
+              channel_id: channelId,
+              content,
+              author: {
+                id: user.id,
+                username: "Insulter",
+                discriminator: "0000",
+                avatar: null,
+                bot: true,
+              },
+              timestamp: new Date().toISOString(),
+              nonce: Date.now().toString(),
+              type: 0,
+            };
+          }
+
           async getInsult() {
-            const response = await fetch(
-              "https://insult.mattbas.org/api/insult"
-            );
-            if (!response.ok) return;
-            return await response.text();
-          }
-          onStop() {
-            ApplicationCommandAPI.unregister(config.info.name)
+            try {
+              const res = await fetch("https://insult.mattbas.org/api/insult");
+              if (!res.ok) return;
+              return await res.text();
+            } catch (e) {
+              Logger.err(e);
+            }
           }
         };
-      })(ZLibrary.buildPlugin(config));
+      })(window.ZeresPluginLibrary.buildPlugin(config))
+    : MissingLibrary;
 })();
-/*@end@*/
